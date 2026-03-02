@@ -105,6 +105,8 @@ If you installed `Docker Desktop`:
    docker stop $(docker ps -q) 2>/dev/null
    ```
 
+   You should see no output.
+
 2. To remove all stopped containers,
 
    [run in the `VS Code Terminal`](./vs-code.md#run-a-command-in-the-vs-code-terminal):
@@ -113,12 +115,25 @@ If you installed `Docker Desktop`:
    docker container prune -f
    ```
 
+   The output should be similar to this:
+
+   ```terminal
+   Total reclaimed space: ...
+   ```
+
 3. To delete unused volumes,
 
    [run in the `VS Code Terminal`](./vs-code.md#run-a-command-in-the-vs-code-terminal):
 
    ```terminal
-   docker volume prune -f
+   docker volume prune -f --all
+   ```
+
+   The output should be similar to this:
+
+   ```terminal
+   ...
+   Total reclaimed space: ...
    ```
 
 ## Common `Docker` commands
