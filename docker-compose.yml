@@ -94,16 +94,14 @@ services:
       context: ./bot
       dockerfile: Dockerfile
     restart: unless-stopped
-    networks:
-      - lms-network
-      - host
+    network_mode: host
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
       - BOT_TOKEN=${BOT_TOKEN:-temp-token}
       - LMS_API_BASE_URL=http://localhost:42002
       - LMS_API_KEY=${LMS_API_KEY:?'LMS_API_KEY is required'}
-      - LLM_API_BASE_URL=${LLM_API_BASE_URL:-http://localhost:42005/v1}
+      - LLM_API_BASE_URL=${LLM_API_BASE_URL:-http://10.93.24.208:42005/v1}
       - LLM_API_KEY=${LLM_API_KEY:?'LLM_API_KEY is required'}
       - LLM_API_MODEL=${LLM_API_MODEL:-coder-model}
     depends_on:
