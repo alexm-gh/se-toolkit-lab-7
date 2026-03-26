@@ -1,7 +1,6 @@
 """Intent router for natural language queries."""
 
 import json
-import sys
 
 from services.llm_client import llm_client
 from services.lms_client import lms_client
@@ -38,9 +37,6 @@ async def route_message(user_message: str) -> str:
     messages = [{"role": "user", "content": user_message}]
     tools = llm_client.get_tool_definitions()
     
-    # Debug output
-    print(f"[router] Processing: {user_message}", file=sys.stderr)
-    
     max_iterations = 5  # Prevent infinite loops
     iteration = 0
     
@@ -63,7 +59,6 @@ async def route_message(user_message: str) -> str:
         if not tool_calls:
             # No tool calls - LLM has a final answer
             content = assistant_message.get("content", "I'm not sure how to help with that.")
-            print(f"[router] Final response: {content[:100]}...", file=sys.stderr)
             return content
         
         # Add assistant message with tool calls to conversation
@@ -80,11 +75,8 @@ async def route_message(user_message: str) -> str:
             except json.JSONDecodeError:
                 tool_args = {}
             
-            print(f"[tool] LLM called: {tool_name}({tool_args})", file=sys.stderr)
-            
             # Execute the tool
             result = await execute_tool(tool_name, tool_args)
-            print(f"[tool] Result: {str(result)[:100]}...", file=sys.stderr)
             
             # Add tool result to conversation
             messages.append({
@@ -92,8 +84,6 @@ async def route_message(user_message: str) -> str:
                 "tool_call_id": tool_call.get("id", ""),
                 "content": json.dumps(result) if not isinstance(result, str) else result,
             })
-        
-        print(f"[summary] Feeding {len(tool_calls)} tool result(s) back to LLM", file=sys.stderr)
     
     # If we reach here, max iterations exceeded
     return "I'm having trouble processing your request. Please try rephrasing."
