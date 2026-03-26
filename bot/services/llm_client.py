@@ -10,7 +10,7 @@ class LLMClient:
     def __init__(self) -> None:
         self.base_url = settings.llm_api_base_url or "http://localhost:42005"
         self.api_key = settings.llm_api_key
-        self.model = "coder-model"  # Default model
+        self.model = settings.llm_api_model or "coder-model"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
