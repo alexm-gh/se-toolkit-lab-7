@@ -1,0 +1,172 @@
+"""LLM client for intent routing."""
+
+import httpx
+from config import settings
+
+
+class LLMClient:
+    """Client for interacting with the LLM API."""
+
+    def __init__(self) -> None:
+        self.base_url = settings.llm_api_base_url or "http://localhost:42005"
+        self.api_key = settings.llm_api_key
+        self.model = "coder-model"  # Default model
+        self.headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+
+    async def chat(
+        self,
+        messages: list[dict],
+        tools: list[dict] | None = None,
+        system_prompt: str | None = None,
+    ) -> dict:
+        """Send a chat request to the LLM with optional tool definitions."""
+        # Build messages with system prompt
+        all_messages = []
+        if system_prompt:
+            all_messages.append({"role": "system", "content": system_prompt})
+        all_messages.extend(messages)
+
+        payload = {
+            "model": self.model,
+            "messages": all_messages,
+        }
+        if tools:
+            payload["tools"] = tools
+
+        url = f"{self.base_url}/v1/chat/completions"
+        async with httpx.AsyncClient(verify=False) as client:
+            response = await client.post(url, headers=self.headers, json=payload)
+            response.raise_for_status()
+            return response.json()
+
+    def get_tool_definitions(self) -> list[dict]:
+        """Return tool definitions for all backend endpoints."""
+        return [
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_items",
+                    "description": "Get list of all labs and tasks. Use this to discover what labs are available.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_learners",
+                    "description": "Get list of enrolled students and their groups.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_scores",
+                    "description": "Get score distribution (4 buckets) for a specific lab.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"}
+                        },
+                        "required": ["lab"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_pass_rates",
+                    "description": "Get per-task average pass rates and attempt counts for a lab.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"}
+                        },
+                        "required": ["lab"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_timeline",
+                    "description": "Get submissions per day for a specific lab.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"}
+                        },
+                        "required": ["lab"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_groups",
+                    "description": "Get per-group scores and student counts for a lab.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"}
+                        },
+                        "required": ["lab"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_top_learners",
+                    "description": "Get top N learners by score for a specific lab.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"},
+                            "limit": {"type": "integer", "description": "Number of top learners to return, e.g. 5"}
+                        },
+                        "required": ["lab"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_completion_rate",
+                    "description": "Get completion rate percentage for a specific lab.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"}
+                        },
+                        "required": ["lab"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "trigger_sync",
+                    "description": "Trigger ETL sync to refresh data from autochecker.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                    },
+                },
+            },
+        ]
+
+
+llm_client = LLMClient()

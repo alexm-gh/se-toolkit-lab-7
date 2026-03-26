@@ -15,8 +15,16 @@ class LMSClient:
     async def get(self, endpoint: str, params: dict | None = None) -> dict | list:
         """Make a GET request to the LMS API."""
         url = f"{self.base_url}{endpoint}"
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=False) as client:
             response = await client.get(url, headers=self.headers, params=params)
+            response.raise_for_status()
+            return response.json()
+
+    async def post(self, endpoint: str, data: dict | None = None) -> dict:
+        """Make a POST request to the LMS API."""
+        url = f"{self.base_url}{endpoint}"
+        async with httpx.AsyncClient(verify=False) as client:
+            response = await client.post(url, headers=self.headers, json=data or {})
             response.raise_for_status()
             return response.json()
 
