@@ -12,7 +12,8 @@ async def handle_labs() -> str:
         
         result = "Available labs:\n"
         for lab in labs:
-            lab_name = lab.get("name", lab.get("id", "Unknown"))
+            # Use 'title' field which contains full lab name
+            lab_name = lab.get("title", lab.get("name", lab.get("id", "Unknown")))
             result += f"- {lab_name}\n"
         return result.strip()
     except Exception as e:
