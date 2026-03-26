@@ -36,11 +36,15 @@ class LLMClient:
         if tools:
             payload["tools"] = tools
 
-        url = f"{self.base_url}/v1/chat/completions"
-        
+        # Build URL - avoid double /v1 if base_url already contains it
+        if self.base_url.endswith("/v1"):
+            url = f"{self.base_url}/chat/completions"
+        else:
+            url = f"{self.base_url}/v1/chat/completions"
+
         # Use verify=False only for HTTPS, HTTP doesn't need SSL verification
         verify_ssl = self.base_url.startswith("https")
-        
+
         async with httpx.AsyncClient(verify=not verify_ssl) as client:
             response = await client.post(url, headers=self.headers, json=payload)
             response.raise_for_status()
