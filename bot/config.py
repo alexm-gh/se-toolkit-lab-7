@@ -1,17 +1,22 @@
 """Configuration loader for the LMS Telegram bot.
 
-Reads secrets from .env.bot.secret file.
+Reads secrets from .env.bot.secret file in the project root.
 """
+
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Get the project root directory (parent of bot/)
+PROJECT_ROOT = Path(__file__).parent.parent
 
 
 class Settings(BaseSettings):
     """Bot configuration settings."""
 
     model_config = SettingsConfigDict(
-        env_file=".env.bot.secret",
+        env_file=str(PROJECT_ROOT / ".env.bot.secret"),
         env_file_encoding="utf-8",
         extra="ignore",
         populate_by_name=True,
