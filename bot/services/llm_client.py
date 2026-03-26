@@ -37,7 +37,11 @@ class LLMClient:
             payload["tools"] = tools
 
         url = f"{self.base_url}/v1/chat/completions"
-        async with httpx.AsyncClient(verify=False) as client:
+        
+        # Use verify=False only for HTTPS, HTTP doesn't need SSL verification
+        verify_ssl = self.base_url.startswith("https")
+        
+        async with httpx.AsyncClient(verify=not verify_ssl) as client:
             response = await client.post(url, headers=self.headers, json=payload)
             response.raise_for_status()
             return response.json()
