@@ -5,43 +5,18 @@ They don't depend on Telegram — same logic works from --test mode,
 unit tests, or Telegram.
 """
 
+from .start import handle_start
+from .help import handle_help
+from .health import handle_health
+from .labs import handle_labs
+from .scores import handle_scores
+from .message import handle_message
 
-# async def handle_start() -> str:
-#     """Handle /start command."""
-#     return "Welcome to LMS Bot! Use /help to see available commands."
-
-
-async def handle_help() -> str:
-    """Handle /help command."""
-    return """Available commands:
-/start — Welcome message
-/help — This help message
-/health — Check backend status
-/labs — List available labs
-/scores <lab> — Get scores for a lab"""
-
-
-async def handle_health() -> str:
-    """Handle /health command."""
-    # TODO: Call backend API in Task 2
-    return "Backend status: OK (placeholder)"
-
-
-async def handle_labs() -> str:
-    """Handle /labs command."""
-    # TODO: Call backend API in Task 2
-    return "Available labs: lab-01, lab-02, lab-03 (placeholder)"
-
-
-async def handle_scores(lab_name: str = "") -> str:
-    """Handle /scores command."""
-    # TODO: Call backend API in Task 2
-    if not lab_name:
-        return "Please specify a lab name, e.g., /scores lab-01"
-    return f"Scores for {lab_name}: Task 1: 80%, Task 2: 75% (placeholder)"
-
-
-async def handle_message(text: str) -> str:
-    """Handle plain text messages (for Task 3 - LLM routing)."""
-    # TODO: Implement LLM intent routing in Task 3
-    return f"I received your message: {text} (placeholder)"
+__all__ = [
+    "handle_start",
+    "handle_help",
+    "handle_health",
+    "handle_labs",
+    "handle_scores",
+    "handle_message",
+]
