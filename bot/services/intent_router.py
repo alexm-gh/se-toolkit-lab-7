@@ -50,7 +50,7 @@ async def route_message(user_message: str) -> str:
     messages = [{"role": "user", "content": user_message}]
     tools = llm_client.get_tool_definitions()
 
-    max_iterations = 5  # Prevent infinite loops
+    max_iterations = 10  # Prevent infinite loops (need enough for multi-step queries)
     iteration = 0
 
     while iteration < max_iterations:
@@ -88,8 +88,15 @@ async def route_message(user_message: str) -> str:
 
         logger.debug(f"LLM called {len(tool_calls)} tool(s)")
 
+        # Build a clean assistant message with ONLY tool_calls (no content)
+        # This prevents the LLM from getting confused by its own commentary
+        clean_assistant_message = {
+            "role": "assistant",
+            "tool_calls": tool_calls,
+        }
+
         # Add assistant message with tool calls to conversation
-        messages.append(assistant_message)
+        messages.append(clean_assistant_message)
 
         # Execute tool calls
         for tool_call in tool_calls:

@@ -10,14 +10,17 @@ logger = logging.getLogger(__name__)
 
 async def handle_message(text: str) -> str:
     """Handle plain text messages using LLM intent routing."""
+    logger.info(f"handle_message called with: {text}")
     try:
+        logger.debug("Calling route_message...")
         response = await route_message(text)
+        logger.info(f"route_message returned: {response[:100]}...")
         return response
     except Exception as e:
         # Log full error with traceback
         logger.error(f"Error handling message '{text}': {e}")
         logger.error(traceback.format_exc())
-        
+
         error_msg = str(e).lower()
         if "connection refused" in error_msg or "connect" in error_msg:
             return f"LLM service error: connection refused. Check that the LLM is running."
