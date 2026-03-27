@@ -73,7 +73,7 @@ class LLMClient:
                 "type": "function",
                 "function": {
                     "name": "get_items",
-                    "description": "Get list of all labs and tasks. Use this to discover what labs are available.",
+                    "description": "Get list of all labs and tasks. Returns array of objects with 'title', 'type', and 'id' fields. Use this FIRST to discover available labs.",
                     "parameters": {
                         "type": "object",
                         "properties": {},
@@ -85,7 +85,7 @@ class LLMClient:
                 "type": "function",
                 "function": {
                     "name": "get_learners",
-                    "description": "Get list of enrolled students and their groups.",
+                    "description": "Get list of enrolled students and their groups. Returns student names, group names, and IDs.",
                     "parameters": {
                         "type": "object",
                         "properties": {},
@@ -97,11 +97,11 @@ class LLMClient:
                 "type": "function",
                 "function": {
                     "name": "get_scores",
-                    "description": "Get score distribution (4 buckets) for a specific lab.",
+                    "description": "Get score distribution for a specific lab. Returns counts of students in 4 score buckets (0-25, 25-50, 50-75, 75-100). Use for understanding score spread, NOT for comparing labs.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"}
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01', 'lab-02'. Must be a valid lab ID from get_items."}
                         },
                         "required": ["lab"],
                     },
@@ -111,11 +111,11 @@ class LLMClient:
                 "type": "function",
                 "function": {
                     "name": "get_pass_rates",
-                    "description": "Get per-task average pass rates and attempt counts for a lab.",
+                    "description": "Get per-task average pass rates (percentages) and attempt counts for a lab. Use this to COMPARE labs by pass rate or find the lowest/highest performing lab.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"}
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01', 'lab-02'. Must be a valid lab ID from get_items."}
                         },
                         "required": ["lab"],
                     },
@@ -125,11 +125,11 @@ class LLMClient:
                 "type": "function",
                 "function": {
                     "name": "get_timeline",
-                    "description": "Get submissions per day for a specific lab.",
+                    "description": "Get submissions per day for a specific lab. Shows when students submitted their work.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"}
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01', 'lab-02'. Must be a valid lab ID from get_items."}
                         },
                         "required": ["lab"],
                     },
@@ -139,11 +139,11 @@ class LLMClient:
                 "type": "function",
                 "function": {
                     "name": "get_groups",
-                    "description": "Get per-group scores and student counts for a lab.",
+                    "description": "Get per-group scores and student counts for a lab. Use to compare group performance within a lab.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"}
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01', 'lab-02'. Must be a valid lab ID from get_items."}
                         },
                         "required": ["lab"],
                     },
@@ -153,12 +153,12 @@ class LLMClient:
                 "type": "function",
                 "function": {
                     "name": "get_top_learners",
-                    "description": "Get top N learners by score for a specific lab.",
+                    "description": "Get top N learners by score for a specific lab. Returns student names and their scores.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"},
-                            "limit": {"type": "integer", "description": "Number of top learners to return, e.g. 5"}
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01', 'lab-02'. Must be a valid lab ID from get_items."},
+                            "limit": {"type": "integer", "description": "Number of top learners to return, e.g. 5 or 10. Default is 5."}
                         },
                         "required": ["lab"],
                     },
@@ -168,11 +168,11 @@ class LLMClient:
                 "type": "function",
                 "function": {
                     "name": "get_completion_rate",
-                    "description": "Get completion rate percentage for a specific lab.",
+                    "description": "Get completion rate percentage for a specific lab. Shows what percent of students completed the lab.",
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01'"}
+                            "lab": {"type": "string", "description": "Lab identifier, e.g. 'lab-01', 'lab-02'. Must be a valid lab ID from get_items."}
                         },
                         "required": ["lab"],
                     },
@@ -182,7 +182,7 @@ class LLMClient:
                 "type": "function",
                 "function": {
                     "name": "trigger_sync",
-                    "description": "Trigger ETL sync to refresh data from autochecker.",
+                    "description": "Trigger ETL sync to refresh data from autochecker. Use when data seems outdated.",
                     "parameters": {
                         "type": "object",
                         "properties": {},
