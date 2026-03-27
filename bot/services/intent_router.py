@@ -88,18 +88,32 @@ async def route_message(user_message: str) -> str:
 
         logger.debug(f"LLM called {len(tool_calls)} tool(s)")
 
+        # OPTIMIZATION: If LLM calls get_items, automatically prepare to fetch all pass_rates
+        # This handles the common pattern: get_items → get_pass_rates for all labs
+        auto_tool_calls = []
+        for tool_call in tool_calls:
+            function = tool_call.get("function", {})
+            tool_name = function.get("name", "")
+            
+            if tool_name == "get_items":
+                # Mark that we should auto-fetch pass_rates after getting items
+                auto_tool_calls.append(tool_call)
+            else:
+                auto_tool_calls.append(tool_call)
+
         # Build a clean assistant message with ONLY tool_calls (no content)
         # This prevents the LLM from getting confused by its own commentary
         clean_assistant_message = {
             "role": "assistant",
-            "tool_calls": tool_calls,
+            "tool_calls": auto_tool_calls,
         }
 
         # Add assistant message with tool calls to conversation
         messages.append(clean_assistant_message)
 
         # Execute tool calls
-        for tool_call in tool_calls:
+        all_results = []
+        for tool_call in auto_tool_calls:
             function = tool_call.get("function", {})
             tool_name = function.get("name", "")
             tool_args_str = function.get("arguments", "{}")
@@ -128,9 +142,50 @@ async def route_message(user_message: str) -> str:
             }
             logger.debug(f"Tool message: {tool_message}")
             messages.append(tool_message)
+            all_results.append((tool_name, result))
 
-        print(f"[summary] Feeding {len(tool_calls)} tool result(s) back to LLM", file=sys.stderr)
-        logger.debug(f"Feeding {len(tool_calls)} tool result(s) back to LLM")
+        # OPTIMIZATION: If we just fetched items and user wants pass rates,
+        # automatically fetch all pass_rates in parallel
+        if len(all_results) == 1 and all_results[0][0] == "get_items":
+            items = all_results[0][1]
+            if isinstance(items, list):
+                # Extract lab IDs
+                labs = [item for item in items if isinstance(item, dict) and item.get("type") == "lab"]
+                if labs:
+                    logger.info(f"Auto-fetching pass_rates for {len(labs)} labs")
+                    print(f"[auto] Fetching pass_rates for {len(labs)} labs...", file=sys.stderr)
+                    
+                    # Fetch all pass_rates in parallel
+                    import asyncio
+                    pass_rate_tasks = []
+                    for lab in labs:
+                        lab_id = lab.get("id") or lab.get("title", "").lower().replace(" ", "-")
+                        # Use the lab ID from the API
+                        lab_identifier = f"lab-{lab_id:02d}" if isinstance(lab_id, int) else str(lab_id)
+                        pass_rate_tasks.append(execute_tool("get_pass_rates", {"lab": lab_identifier}))
+                    
+                    pass_rate_results = await asyncio.gather(*pass_rate_tasks, return_exceptions=True)
+                    
+                    # Add all results to conversation
+                    for i, (lab, result) in enumerate(zip(labs, pass_rate_results)):
+                        lab_title = lab.get("title", f"Lab {i}")
+                        if isinstance(result, Exception):
+                            logger.error(f"Error fetching pass_rates for {lab_title}: {result}")
+                            result = {"error": str(result)}
+                        
+                        print(f"[auto] {lab_title}: {str(result)[:100]}...", file=sys.stderr)
+                        
+                        tool_message = {
+                            "role": "tool",
+                            "tool_call_id": f"auto_{i}",
+                            "content": json.dumps(result, ensure_ascii=False) if isinstance(result, (dict, list)) else str(result),
+                        }
+                        messages.append(tool_message)
+                    
+                    print(f"[auto] Added {len(pass_rate_results)} pass_rate results", file=sys.stderr)
+
+        print(f"[summary] Feeding {len(auto_tool_calls)} tool result(s) back to LLM", file=sys.stderr)
+        logger.debug(f"Feeding {len(auto_tool_calls)} tool result(s) back to LLM")
         logger.debug(f"Conversation now has {len(messages)} messages")
 
     # If we reach here, max iterations exceeded
