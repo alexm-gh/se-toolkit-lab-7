@@ -1,7 +1,10 @@
 """LLM client for intent routing."""
 
+import logging
 import httpx
 from config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class LLMClient:
@@ -42,13 +45,26 @@ class LLMClient:
         else:
             url = f"{self.base_url}/v1/chat/completions"
 
-        # Use verify=False only for HTTPS, HTTP doesn't need SSL verification
+        # Disable SSL verification for HTTP (localhost) connections
+        # For HTTPS, keep verification enabled
         verify_ssl = self.base_url.startswith("https")
 
-        async with httpx.AsyncClient(verify=not verify_ssl) as client:
-            response = await client.post(url, headers=self.headers, json=payload)
-            response.raise_for_status()
-            return response.json()
+        logger.debug(f"LLM request: POST {url}")
+        logger.debug(f"Headers: {self.headers}")
+        logger.debug(f"Payload: {payload}")
+
+        try:
+            async with httpx.AsyncClient(verify=verify_ssl) as client:
+                response = await client.post(url, headers=self.headers, json=payload)
+                logger.debug(f"LLM response status: {response.status_code}")
+                response.raise_for_status()
+                return response.json()
+        except httpx.ConnectError as e:
+            logger.error(f"LLM connection error: {e}")
+            raise
+        except httpx.HTTPStatusError as e:
+            logger.error(f"LLM HTTP error: {e.response.status_code} - {e.response.text}")
+            raise
 
     def get_tool_definitions(self) -> list[dict]:
         """Return tool definitions for all backend endpoints."""
