@@ -54,7 +54,8 @@ class LLMClient:
         logger.debug(f"Payload: {payload}")
 
         try:
-            async with httpx.AsyncClient(verify=verify_ssl) as client:
+            # Increase timeout for LLM requests (they can take 10+ seconds)
+            async with httpx.AsyncClient(verify=verify_ssl, timeout=30.0) as client:
                 response = await client.post(url, headers=self.headers, json=payload)
                 logger.debug(f"LLM response status: {response.status_code}")
                 response.raise_for_status()
@@ -64,6 +65,9 @@ class LLMClient:
             raise
         except httpx.HTTPStatusError as e:
             logger.error(f"LLM HTTP error: {e.response.status_code} - {e.response.text}")
+            raise
+        except httpx.ReadTimeout as e:
+            logger.error(f"LLM read timeout: {e}")
             raise
 
     def get_tool_definitions(self) -> list[dict]:

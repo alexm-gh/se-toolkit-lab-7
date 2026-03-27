@@ -144,10 +144,10 @@ async def route_message(user_message: str) -> str:
             messages.append(tool_message)
             all_results.append((tool_name, result))
 
-        # OPTIMIZATION: If we just fetched items and user wants pass rates,
-        # automatically fetch all pass_rates in parallel
-        if len(all_results) == 1 and all_results[0][0] == "get_items":
-            items = all_results[0][1]
+        # OPTIMIZATION: If we just fetched items, automatically fetch all pass_rates
+        # This handles the common pattern: get_items → get_pass_rates for all labs
+        if any(name == "get_items" for name, _ in all_results):
+            items = next((result for name, result in all_results if name == "get_items"), None)
             if isinstance(items, list):
                 # Extract lab IDs
                 labs = [item for item in items if isinstance(item, dict) and item.get("type") == "lab"]
