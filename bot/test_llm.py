@@ -91,6 +91,13 @@ async def test_llm_with_tools():
     if tool_calls:
         print("\n\n>>> Calling LLM second time with tool results...")
         print(f"Messages in conversation: {len(messages)}")
+        print(f"\nMessages structure:")
+        for i, msg in enumerate(messages):
+            role = msg.get('role', 'unknown')
+            has_content = bool(msg.get('content'))
+            has_tool_calls = bool(msg.get('tool_calls'))
+            has_tool_call_id = bool(msg.get('tool_call_id'))
+            print(f"  [{i}] role={role}, content={has_content}, tool_calls={has_tool_calls}, tool_call_id={has_tool_call_id}")
         
         response2 = await llm_client.chat(
             messages=messages,
@@ -102,10 +109,17 @@ async def test_llm_with_tools():
         assistant_message2 = choice2.get("message", {})
         
         print(f"\nFinal answer:")
-        print(f"  Content: {assistant_message2.get('content', 'None')[:500]}")
+        content = assistant_message2.get('content', 'None')
+        print(f"  Content: {content[:500] if content else 'None'}")
         
         tool_calls2 = assistant_message2.get("tool_calls", [])
         print(f"\n  More tool calls: {len(tool_calls2)}")
+        
+        if tool_calls2:
+            print("\n  Second round tool calls:")
+            for i, tc in enumerate(tool_calls2[:3]):  # Show first 3
+                func = tc.get("function", {})
+                print(f"    {i+1}. {func.get('name', 'N/A')}({func.get('arguments', '{}')})")
 
 
 if __name__ == "__main__":
