@@ -89,12 +89,13 @@ services:
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
 
-  app:
+  bot:
     build:
       context: ./bot
       dockerfile: Dockerfile
     restart: unless-stopped
-    network_mode: host
+    networks:
+      - lms-network
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
