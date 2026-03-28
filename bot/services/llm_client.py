@@ -11,7 +11,7 @@ class LLMClient:
     """Client for interacting with the LLM API."""
 
     def __init__(self) -> None:
-        self.base_url = settings.llm_api_base_url or "http://10.93.24.208:42005/v1"
+        self.base_url = settings.llm_api_base_url
         self.api_key = settings.llm_api_key
         self.model = settings.llm_api_model or "coder-model"
         self.headers = {
