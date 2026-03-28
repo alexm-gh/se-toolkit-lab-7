@@ -11,7 +11,7 @@ async def handle_health() -> str:
     except Exception as e:
         error_msg = str(e).lower()
         if "connection refused" in error_msg or "connect" in error_msg:
-            return f"Backend error: connection refused. Check that the services are running."
+            return f"Backend error: connection refused. Check that the services are running.\n\n{e}\n{error_msg}"
         elif "502" in error_msg or "bad gateway" in error_msg:
             return f"Backend error: HTTP 502 Bad Gateway. The backend service may be down."
         elif "401" in error_msg or "unauthorized" in error_msg:
